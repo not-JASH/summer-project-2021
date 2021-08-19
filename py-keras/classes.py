@@ -17,7 +17,7 @@ class poi:
         delta = secant - data
         x = argmax(abs(delta))
         
-        if x == 1 || x == len(data):
+        if x == 1 or x == len(data):
             x = -1
             y = -1
         else:
@@ -44,12 +44,12 @@ class pois:
         if x < self.points[0].x:
             self.points.insert(0,poi(x,y))
             return
-        else if x > self.points[-1].x:
+        elif x > self.points[-1].x:
             self.points.append(poi(x,y))
             return
 
         for i in range(len(self.points)-1):
-            if x > self.points[i].x && x < self.points[i+1].x:
+            if x > self.points[i].x or x < self.points[i+1].x:
                 self.points.insert(i+1,poi(x,y))
 
     def addPoints(self):
