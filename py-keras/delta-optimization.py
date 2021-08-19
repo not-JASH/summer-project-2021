@@ -1,4 +1,4 @@
-from numpy import argmax,argmin
+from numpy import argmax,argmin,zeros
 
 class poi:
     def __init__(self,x,y):
@@ -48,6 +48,59 @@ class pois:
             self.points.append(poi(x,y))
             return
 
+        for i in range(len(self.points)-1):
+            if x > self.points[i].x && x < self.points[i+1].x:
+                self.points.insert(i+1,poi(x,y))
+
+    def addPoints(self):
+        i = 0
+        while i < len(self.points)-1:
+            if self.checkStop(self.points[i],self.points[i+1],self.rate):
+                i += 1
+            else:
+                x,y = self.points[i].getMidPoint(points[i+1],self.data)
+
+                if x < 0:
+                    continue
+
+                self.addPoint(x,y)
+
+        self.tobin
+
+    def tobin(self):
+        binrep = zeros(self.points.shape)
+        for i in range(len(points)-1):
+            if self.points[i].y < self.points[i+1].y:
+                binrep[self.points[i].x:self.points[i+1].x] = 1
+
+        self.binrep = binrep
+        return binrep
+
+    def checkStop(self,p1,p2,window):
+        stop = False
+        if abs(p2.x - p1.x) < window:
+            stop = True
+
+        return stop
+
+    def plotLines(self):
+        '''
+        scikit?
+        matplotlib?
+        '''
+
+    def getDelta(self):
+        delta = 0
+        for i in range(len(self.points)-1):
+            delta += abs(points[i+1].y - points[i].y)
+
+        return delta
+        
+                
+        
+                
+        
+    
         
         
         
