@@ -7,17 +7,17 @@ class poi:
 
     def getSecant(self,rhn):
         m = (rhn.y - self.y)/(rhn.x - self.x)
-        b = self.y-(b*self.x);
-        return [m,x]
+        b = self.y-(m*self.x);
+        return [m,b]
 
     def getMidPoint(self,rhn,data):
+        
         coeffs = self.getSecant(rhn)
         secant = coeffs[0]*range(self.x,rhn.x)+coeffs[1]
-        data = data(range(self.x,rhn.x))
+        data = data[self.x:rhn.x]
         delta = secant - data
         x = argmax(abs(delta))
-        
-        if x == 1 or x == len(data):
+        if x == 0 or x == len(data):
             x = -1
             y = -1
         else:
@@ -27,18 +27,18 @@ class poi:
         return x,y
 
 class pois:
-    def __init__(self,data,rate):
-        self.zeromean = data[0]-data[1]
-        data = data[0]
-        self.data = data
+    def __init__(self,open,close,rate):
+        self.zeromean = close - open
+        self.data = close
         self.rate = rate
-        self.points = poi(1,data[0])
-        x = argmax(data)
-        self.addPoint(x,data[x])
-        x = argmin(data)
-        self.addPoint(x,data[x])
-        x = len(data)-1
-        self.addPoint(x,data[x])
+        self.points = list()
+        self.points.append(poi(1,close[0]))
+        x = argmax(close)
+        self.addPoint(x,close[x])
+        x = argmin(close)
+        self.addPoint(x,close[x])
+        x = len(close)-1
+        self.addPoint(x,close[x])
 
     def addPoint(self,x,y):
         if x < self.points[0].x:
@@ -49,7 +49,7 @@ class pois:
             return
 
         for i in range(len(self.points)-1):
-            if x > self.points[i].x or x < self.points[i+1].x:
+            if x > self.points[i].x and x < self.points[i+1].x:
                 self.points.insert(i+1,poi(x,y))
 
     def addPoints(self):
@@ -58,18 +58,18 @@ class pois:
             if self.checkStop(self.points[i],self.points[i+1],self.rate):
                 i += 1
             else:
-                x,y = self.points[i].getMidPoint(points[i+1],self.data)
+                x,y = self.points[i].getMidPoint(self.points[i+1],self.data)
 
                 if x < 0:
+                    i += 1
                     continue
-
                 self.addPoint(x,y)
-
-        self.tobin
+        self.tobin()
+        return self
 
     def tobin(self):
-        binrep = zeros(self.points.shape)
-        for i in range(len(points)-1):
+        binrep = zeros(len(self.data))
+        for i in range(len(self.points)-1):
             if self.points[i].y < self.points[i+1].y:
                 binrep[self.points[i].x:self.points[i+1].x] = 1
 

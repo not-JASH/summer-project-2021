@@ -1,30 +1,42 @@
-from classes import poi, pois
-from keras.models import model
+from functions import getSamples,subsample
+from keras.models import Model
 from keras.layers import Input, LSTM, Bidirectional, Dense, Activation, Dropout
 
+if __name__ == '__main__':  
 
-hL = 128 #hidden layers
-Ws = 360 #windowSize
-batchSize = 64
+    hL = 128 #hidden layers
+    Ws = 360 #windowSize
+    batchSize = 64
+    nSamples = 1e4
+    predLen = 5
 
-model = model([
-    Input(shape=(1,Ws), batch_size = batchSize),
 
-    Bidirectional(LSTM(hL)),
-    Dropout(0.2),
-    Activation('relu'),
-    Dense(Ws),
+    samples = getSamples("BTCUSDT.txt")
+    xData,yData = subsample(samples,nSamples,Ws,predLen)
 
-    Bidirectional(LSTM(hL)),
-    Dropout(0.2),
-    Activation('relu'),
+    print(xData[1].shape,yData[1].shape)
 
-    Bidirectional(LSTM(hL)),
-    Dropout(0.2),
-    Activation('relu'),
+    '''
 
-    Dense(1)
-    ])
+    model = Model([
+        Input(shape=(1,Ws), batch_size = batchSize),
+
+        Bidirectional(LSTM(hL)),
+        Dropout(0.2),
+        Activation('relu'),
+        Dense(Ws),
+
+        Bidirectional(LSTM(hL)),
+        Dropout(0.2),
+        Activation('relu'),
+
+        Bidirectional(LSTM(hL)),
+        Dropout(0.2),
+        Activation('relu'),
+
+        Dense(1)
+        ])
 
 
  
+    '''

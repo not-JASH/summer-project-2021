@@ -31,7 +31,6 @@ for i = 1:nSamples
     yData{i} = yData{i}';
 end
 
-
 function data = scaleData(data)
     data = data-min(data);
     data = data/max(data);
