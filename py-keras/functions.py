@@ -3,8 +3,7 @@ from classes import poi,pois
 from math import ceil
 from random import randint
 from multiprocessing import Pool
-from numpy import zeros,append,linspace, round
-
+from numpy import zeros,append,linspace, round,transpose
 
 def getData(datafile):
     '''
@@ -48,9 +47,9 @@ def subsample(samples,nSamples = 1e4,windowSize = 360, predLen = 5):
     yData = list()
     def getSubsample(sample):
         xo = randint(0,len(sample.data)-1-windowSize-predLen)
-        xData.append(scaleData(sample.zeromean[xo:xo+windowSize-1]))
+        xData.append(transpose(scaleData(sample.zeromean[xo:xo+windowSize])))
         xo += predLen
-        yData.append(sample.binrep[xo:xo+windowSize-1])
+        yData.append(transpose(sample.binrep[xo:xo+windowSize]))
         
     for i in range(len(sampleLocs)):
         getSubsample(samples[sampleLocs[i]])
