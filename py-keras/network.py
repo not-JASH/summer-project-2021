@@ -1,25 +1,26 @@
 from functions import getSamples,subsample
 from numpy import array
-from keras.models import Model
+from keras.models import Model, Sequential 
 from keras.optimizer_v2.adam import Adam
 from keras.losses import MeanSquaredError
-from keras.layers import Input, LSTM, Bidirectional, Dense, Activation, Dropout
+from keras.layers import LSTM, Bidirectional, Dense, Activation, Dropout
+from keras.engine.input_layer import InputLayer as Input 
 
 
 def getModel(hiddenLayers = 128, batchSize = 32, windowSize = 100):
-    return Model([
-        #Input(shape=(1,windowSize), batch_size = batchSize),
+    return Sequential([
+        Input(input_shape=(1,windowSize), batch_size = batchSize),
 
-        Bidirectional(LSTM(hiddenLayers)),
+        Bidirectional(LSTM(hiddenLayers,return_sequences=True)),
         Dropout(0.2),
         Activation('relu'),
         Dense(windowSize),
 
-        Bidirectional(LSTM(hiddenLayers)),
+        Bidirectional(LSTM(hiddenLayers,return_sequences=True)),
         Dropout(0.2),
         Activation('relu'),
 
-        Bidirectional(LSTM(hiddenLayers)),
+        Bidirectional(LSTM(hiddenLayers,return_sequences=True)),
         Dropout(0.2),
         Activation('relu'),
 
@@ -51,7 +52,6 @@ if __name__ == '__main__':
     model.fit(
         xData,
         yData,
-        batch_size=batchSize,
         epochs=100,
         #validation_split=0.2
         )
