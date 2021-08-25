@@ -1,10 +1,13 @@
 {
   "ExpandedNodes": [
     "",
-    "\\delta_optimization",
-    "\\network",
-    "\\py-keras"
+    "\\concept",
+    "\\concept\\delta_optimization",
+    "\\concept\\network",
+    "\\implementation",
+    "\\implementation\\azure",
+    "\\implementation\\network"
   ],
-  "SelectedNode": "\\ModelNotes.docx",
+  "SelectedNode": "\\implementation\\network\\network.py",
   "PreviewInSolutionExplorer": false
 }

@@ -1,4 +1,4 @@
-from sys import exit
+from sys import exit,argv
 from getopt import getopt, GetoptError
 from functions import getSamples,subsample
 from numpy import array
