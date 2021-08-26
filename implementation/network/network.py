@@ -75,7 +75,7 @@ if __name__ == '__main__':
 
     xData = array(xData)
     yData = array(yData)
-    print(xData.shape,yData.shape)
+    #print(xData.shape,yData.shape)
 
     model = getModel(hL,batchSize,Ws)
     
