@@ -11,7 +11,7 @@ from keras.engine.input_layer import InputLayer as Input
 
 def getModel(hiddenLayers = 128, batchSize = 32, windowSize = 100):
     return Sequential([
-        Input(input_shape=(windowSize,1,), batch_size = batchSize),
+        Input(input_shape=(1,windowSize)),
 
         Bidirectional(LSTM(hiddenLayers,return_sequences=True)),
         Dropout(0.2),
@@ -26,14 +26,14 @@ def getModel(hiddenLayers = 128, batchSize = 32, windowSize = 100):
         Dropout(0.2),
         Activation('relu'),
 
-        Dense(1)
+        Dense(windowSize)
         ])
 
 def getArgs():
     hiddenLayers = 128
     windowSize = 360
-    batchSize = 64
-    nSamples = 3.2*1e4
+    batchSize = 100
+    nSamples = 6.4*1e4
     predLen = 5
 
     help = "network.py -l <hidden layers> -w <window size> -b <batch size> -s <no. samples> -p <prediction length>"
@@ -75,7 +75,7 @@ if __name__ == '__main__':
 
     xData = array(xData)
     yData = array(yData)
-    #print(xData.shape,yData.shape)
+    print(xData.shape,yData.shape)
 
     model = getModel(hL,batchSize,Ws)
     
@@ -88,11 +88,11 @@ if __name__ == '__main__':
         xData,
         yData,
         batch_size=batchSize,
-        epochs=100,
+        epochs=1,
         validation_split=0.2,
         shuffle=True
         )
     
     model.save("version1")
-
+ 
     
