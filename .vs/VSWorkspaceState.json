@@ -6,8 +6,9 @@
     "\\concept\\network",
     "\\implementation",
     "\\implementation\\azure",
-    "\\implementation\\network"
+    "\\implementation\\network",
+    "\\implementation\\trade-interface"
   ],
-  "SelectedNode": "\\implementation\\network\\network.py",
+  "SelectedNode": "\\implementation\\network\\visualization.py",
   "PreviewInSolutionExplorer": false
 }

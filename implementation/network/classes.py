@@ -41,16 +41,20 @@ class pois:
         self.addPoint(x,close[x])
 
     def addPoint(self,x,y):
+        x+=1
         if x < self.points[0].x:
             self.points.insert(0,poi(x,y))
-            return
+            return True
         elif x > self.points[-1].x:
             self.points.append(poi(x,y))
-            return
+            return True
 
         for i in range(len(self.points)-1):
             if x > self.points[i].x and x < self.points[i+1].x:
                 self.points.insert(i+1,poi(x,y))
+                return True
+            elif x == self.points[i].x or x == self.points[i+1].x:
+                return False
 
     def addPoints(self):
         i = 0
@@ -60,10 +64,10 @@ class pois:
             else:
                 x,y = self.points[i].getMidPoint(self.points[i+1],self.data)
 
-                if x < 0:
+                if x < 0 or not self.addPoint(x,y):
                     i += 1
                     continue
-                self.addPoint(x,y)
+
         self.tobin()
         return self
 
@@ -92,13 +96,11 @@ class pois:
     def getDelta(self):
         delta = 0
         for i in range(len(self.points)-1):
-            delta += abs(points[i+1].y - points[i].y)
+            delta += abs(self.points[i+1].y - self.points[i].y)
 
         return delta
-        
-                
-        
-                
+
+
         
     
         

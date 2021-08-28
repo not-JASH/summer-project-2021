@@ -45,16 +45,21 @@ def subsample(samples,nSamples = 1e4,windowSize = 360, predLen = 5):
     sampleLocs = [randint(0,len(samples)-1) for i in range(ceil(nSamples))]
     xData = list()
     yData = list()
+    xRef = list()
+    yRef = list()
+
     def getSubsample(sample):
         xo = randint(0,len(sample.data)-1-windowSize-predLen)
         xData.append(reshape(scaleData(sample.zeromean[xo:xo+windowSize]),(1,windowSize)))
+        xRef.append(sample.data[xo:xo+windowSize])
+        yRef.append(sample.binrep[xo:xo+windowSize])
         xo += predLen
         yData.append(reshape(sample.binrep[xo:xo+windowSize],(1,windowSize)))
         
     for i in range(len(sampleLocs)):
         getSubsample(samples[sampleLocs[i]])
 
-    return xData,yData
+    return xData,yData,xRef,yRef
 
 
 def scaleData(data):
