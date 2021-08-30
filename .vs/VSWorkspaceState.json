@@ -9,6 +9,6 @@
     "\\implementation\\network",
     "\\implementation\\trade-interface"
   ],
-  "SelectedNode": "\\implementation\\network\\visualization.py",
+  "SelectedNode": "\\implementation\\network\\classes.py",
   "PreviewInSolutionExplorer": false
 }

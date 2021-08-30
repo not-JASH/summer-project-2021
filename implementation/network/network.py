@@ -7,18 +7,19 @@ from keras.optimizer_v2.adam import Adam
 from keras.losses import MeanSquaredError
 from keras.layers import LSTM, Bidirectional, Dense, Activation, Dropout
 from keras.engine.input_layer import InputLayer as Input 
+from keras.callbacks import EarlyStopping
 
 
 def getModel(hiddenLayers = 128, batchSize = 32, windowSize = 100):
     return Sequential([
-        Input(input_shape=(1,windowSize)),
+        Input(input_shape=(windowSize,1)),
 
         Bidirectional(LSTM(hiddenLayers,return_sequences=True)),
         Dropout(0.2),
         Activation('relu'),
         Dense(windowSize),
 
-        Bidirectional(LSTM(hiddenLayers,return_sequences=True)),
+        Bidirectional(LSTM(int(0.5*hiddenLayers),return_sequences=True)),
         Dropout(0.2),
         Activation('relu'),
 
@@ -26,7 +27,7 @@ def getModel(hiddenLayers = 128, batchSize = 32, windowSize = 100):
         Dropout(0.2),
         Activation('relu'),
 
-        Dense(windowSize)
+        Dense(1)
         ])
 
 def getArgs():
@@ -90,7 +91,14 @@ if __name__ == '__main__':
         batch_size=batchSize,
         epochs=1,
         validation_split=0.2,
-        shuffle=True
+        shuffle=True,
+        callbacks=[
+            EarlyStopping(
+                monitor='val_loss',
+                patience=4,
+                mode='min',
+                verbose=1
+                )]
         )
     
     model.save("version1")
