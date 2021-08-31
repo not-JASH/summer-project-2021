@@ -5,10 +5,11 @@
     "\\concept\\delta_optimization",
     "\\concept\\network",
     "\\implementation",
-    "\\implementation\\azure",
-    "\\implementation\\network",
-    "\\implementation\\trade-interface"
+    "\\implementation\\Version-0",
+    "\\implementation\\Version-0\\network",
+    "\\implementation\\Version-1",
+    "\\implementation\\Version-1\\network"
   ],
-  "SelectedNode": "\\implementation\\trade-interface\\classes.py",
+  "SelectedNode": "\\implementation\\Version-1\\trade-interface",
   "PreviewInSolutionExplorer": false
 }
