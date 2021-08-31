@@ -7,9 +7,9 @@
     "\\implementation",
     "\\implementation\\Version-0",
     "\\implementation\\Version-0\\network",
-    "\\implementation\\Version-1",
-    "\\implementation\\Version-1\\network"
+    "\\implementation\\Version-0\\trade-interface",
+    "\\implementation\\Version-1"
   ],
-  "SelectedNode": "\\implementation\\Version-1\\trade-interface",
+  "SelectedNode": "\\implementation\\Version-1\\network.py",
   "PreviewInSolutionExplorer": false
 }
