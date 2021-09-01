@@ -97,44 +97,56 @@ def evaluate(sample,model,window_size):
     trader.model = model
 
     delta,entry,exit,wins,losses,temp = 0,0,0,0,0,0
+    total = 1
     ls = None
     wOpen,wClose = zeros((window_size)), zeros((window_size))
 
     for i in range(len(sample.close)):
         if i % 1440 == 0:
-            print("\n",int(i/1440) + 1," days\n")
+            print("\nday ",int(i/1440) + 1,"\n")
+
         wOpen, wClose = cycle(wOpen,sample.open[i]), cycle(wClose,sample.close[i])
         if wOpen[0] == 0:
             continue
 
         #clean this up
         ls,exit = trader.iter(wOpen,wClose)
+        
         if ls is not None:
             if entry == 0:
                 entry = exit
             elif ls:
                 temp = entry-exit
-                
+                temp = temp/entry
+
                 if temp > 0:
                     wins += 1
                 else: 
                     losses += 1
 
+                total = total*(1+temp)
                 delta += temp
                 entry = exit
-                print("long, total delta: ", delta, "   accuracy : ", wins/(wins+losses))
+                print("long , total delta: %", delta, "   accuracy : %", int(100*wins/(wins+losses)))
+                print("exp_total: ",total)
             elif not ls:
                 temp = exit-entry
+                temp = temp/entry
                 
                 if temp > 0:
                     wins += 1
                 else: 
                     losses += 1
                 
-                delta += temp
+                total = total*(1+temp)
+                delta += 100*temp
                 entry = exit
-                print("short, total delta: ", delta, "   accuracy : ", wins/(wins+losses))
-    print("\n\nTotal delta: ", delta, "   accuracy : ", wins/(wins+losses)) 
+                print("short, total delta: %", delta, "   accuracy : %", int(100*wins/(wins+losses)))
+                print("exp_total: ",total)
+    
+    print("\n\nTotal delta: %", delta, "   accuracy : %", int(100*wins/(wins+losses)))
+    print("Total Trades: ",wins+losses)
+    print("exp_total: ",total)
 
     return delta, wins, losses
 

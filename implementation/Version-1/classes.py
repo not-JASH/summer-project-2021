@@ -160,12 +160,18 @@ class interface:
         prediction = self.model.predict(self.scaleData(open,close))
         return reshape(prediction,(self.windowSize))
     
+    def checkState(self):
+        '''
+        compute weighted average of predicted values and return bool
+        '''
+    
     def iter(self,open=None,close=None):
         prediction = self.fwp(open,close)
+        offset = -1
 
-        if self.state != 0 and prediction[-self.predLen-1] < 0.5:
+        if self.state != 0 and prediction[-self.predLen+offset] < 0.5:
             return self.short(close)
-        elif self.state != 1 and prediction[-self.predLen-1] > 0.5:
+        elif self.state != 1 and prediction[-self.predLen+offset] > 0.5:
             return self.long(close)
         else: 
             return None,0

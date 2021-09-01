@@ -3,7 +3,8 @@ from numpy import array
 from keras.models import Model, Sequential 
 from keras.optimizer_v2.adam import Adam
 from keras.losses import MeanSquaredError
-from keras.layers import LSTM, Bidirectional, Dense, Activation, Dropout
+from tensorflow.keras.optimizers.schedules import ExponentialDecay
+from keras.layers import LSTM, Bidirectional, Dense, Activation, Dropout, Conv1DTranspose, Conv1D, Conv2DTranspose, Conv2D, Reshape
 from keras.engine.input_layer import InputLayer as Input 
 from keras.callbacks import EarlyStopping
 
@@ -12,17 +13,21 @@ def getModel(hiddenLayers = 128, batchSize = 32, windowSize = 100):
     return Sequential([
         Input(input_shape=(windowSize,1)),
 
-        Bidirectional(LSTM(hiddenLayers,return_sequences=True)),
-        Dropout(0.2),
+        Bidirectional(LSTM(int(hiddenLayers),
+                        activation='tanh',
+                        recurrent_activation='sigmoid',
+                        dropout=0,
+                        return_sequences=True
+                        )),
         Activation('relu'),
-        Dense(1),
-
-        Bidirectional(LSTM(int(0.5*hiddenLayers),return_sequences=True)),
         Dropout(0.2),
-        Activation('relu'),
 
-        Bidirectional(LSTM(hiddenLayers,return_sequences=True)),
-        Dropout(0.2),
+        Bidirectional(LSTM(int(hiddenLayers),
+                           dropout=0.0,
+                           activation='tanh',
+                           recurrent_activation='sigmoid',
+                           return_sequences=True
+                           )),
         Activation('relu'),
 
         Dense(1)
@@ -33,14 +38,14 @@ if __name__ == '__main__':
     model_name = "v2-"
     model_name = "/implementation/version-1/" + model_name
 
-    hidden_layers = 128
-    window_size = 360
+    hidden_layers = 64
+    window_size = 90
     batch_size = 100
     no_samples = 1e4
     no_sets = 10
-    prediction_length = 5
-    k = 10080
-    n = 1440
+    prediction_length = 0
+    k = 14*24*60
+    n = int(24*60)
 
     learn_rate = 1e-3
 
@@ -53,7 +58,12 @@ if __name__ == '__main__':
 
         model = getModel(hidden_layers,batch_size,window_size)
         model.compile(
-            optimizer=Adam(learn_rate),
+            optimizer=Adam(
+                ExponentialDecay(learn_rate,
+                                 int(no_samples*3),
+                                 0.8
+                                 )
+                ),
             loss=MeanSquaredError()
             )
         model.fit(xData,yData,batch_size,
@@ -64,12 +74,13 @@ if __name__ == '__main__':
                   callbacks=[
                       EarlyStopping(
                       monitor='val_loss',
+                      #monitor='loss',
                       patience=4,
                       mode='min',
                       verbose=0
                       )]
                   )
-        model.save((model_name + str(i)))
+        #model.save((model_name + str(i)))
 
         evaluate(evalSamples[i],model,window_size)
         
