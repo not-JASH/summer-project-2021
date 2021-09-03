@@ -1,15 +1,90 @@
 from keras.layers import Layer, Embedding, Dropout, Add, LayerNormalization, Dense, Reshape, Permute, Attention
-from tensorflow.math import sqrt
-from tensorflow import cast, float32,shape
-
-
+from tensorflow.keras.optimizers.schedules import LearningRateSchedule
+from keras.optimizer_v2.adam import Adam
+from keras.losses import MeanSquaredError, SparseCategoricalCrossentropy
+from keras.models import Model
+from keras.metrics import SparseCategoricalAccuracy, RootMeanSquaredError
+from keras.engine.input_layer import InputLayer as Input
+from tensorflow.math import sqrt, rsqrt, minimum, logical_not, equal
+from tensorflow import cast, float32,shape, reduce_sum
 
 '''
     This transformer pulled and adapted from
     https://medium.com/@max_garber/simple-keras-transformer-model-74724a83bb83
+    https://colab.research.google.com/drive/1CBe2VlogbyXzmIyRQGH5xzuvLwGrvjcf?usp=sharing#scrollTo=6wOZpgGc8hSH
+    Credit: Max Gerber
 
     d_model -> hidden_layers
 '''
+
+class Transformer:
+    def __init__(self,input_size,target_size,no_layers=4,hidden_layers=128,dff=512,no_heads=8,dropout_rate=0.1):
+        input = Input(shape=(None,))
+        target = Input(shape=(None,))
+
+        encoder = Encoder(input_size, no_layers=no_layers,hidden_layers=hidden_layers,no_heads=no_heads,dff=dff,dropout=dropout_rate)
+        decoder = Decoder(target_size,no_layers=no_layers,hidden_layers=hidden_layers,no_heads=no_heads,dff=dff,dropout_rate=dropout_rate)
+
+        x = encoder(input)
+        x = decoder([target,x], mask=encoder.compute_mask(input))
+        x = Dense(target_size)(x)
+
+        self.model = Model(inputs=[input,target], outputs=x)
+
+        self.model.summary()
+
+        self.hidden_layers = hidden_layers
+        #return model
+
+    def train(self,train_dataset,val_dataset):
+        optimizer = Adam(CustomSchedule(self.hidden_layers),beta_1=0.9, beta_2=0.98, epsilon=1e-9)
+
+        #loss = SparseCategoricalCrossentropy(from_logits=True,reduction='none')
+        loss = MeanSquaredError()
+
+        def masked_loss(y_true,y_pred):
+            mask = logical_not(equal(y_true,0))
+            _loss = loss(y_true,y_pred)
+
+            mask = cast(mask, dtype=_loss.dtype)
+            _loss *= mask
+
+            return reduce_sum(_loss)/reduce_sum(mask)
+
+        #metrics = [loss,masked_loss,SparseCategoricalAccuracy()]
+        metrics = [loss,masked_loss,RootMeanSquaredError()]
+
+        self.model.compile(optimizer=optimizer,loss=loss,metrics=metrics) #masked
+
+        no_batches = 0
+        for (batch,(_,_)) in enumerate(train_dataset):
+            val_batches = batch
+
+        def generator(data_set):
+            while True:
+                for x_batch, y_batch in dataset:
+                    yield([x_batch, en_batch[:,:-1]], en_batch[:,1:])
+
+        history = self.model.fit(x = generator(train_dataset),
+                                 validation_data=generator(val_dataset),
+                                 epochs=20,
+                                 steps_per_epoch=num_batches,
+                                 validation_steps=val_batches)
+        return history
+
+
+class CustomSchedule(LearningRateSchedule):
+    def __init__(self,hidden_layers,warmup_steps=4000):
+        super(CustomSchedule,self).__init__()
+
+        self.hidden_layers = hidden_layers
+        self.hidden_layers = cast(self.hidden_layers,float32)
+
+        self.warmup_steps = warmup_steps
+
+    def __call__(self,step):
+        return rsqrt(self.hidden_layers) * minimum(rsqrt(step),step*(self.warmup_steps ** -1.5))
+
 
 class Encoder(Layer):
     def __init__(self,input_size,no_layers=4,hidden_layers=512,no_heads=8,dff=2048,maximum_position_encoding=10000,dropout=0.0):
