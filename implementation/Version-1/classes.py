@@ -1,7 +1,11 @@
 from tensorflow import keras
 from keras.models import load_model
 from binance.client import Client
-from numpy import argmax, argmin, zeros, reshape
+from numpy import argmax, argmin, zeros, reshape, mean, std
+
+def scaleData(data):
+    #outlier detection?
+    return (data-mean(data))/std(data)
 
 class poi:
     def __init__(self,x,y):
@@ -131,9 +135,7 @@ class interface:
         for i in range(self.windowSize):
             data[i] = close[i] - open[i]
         
-        data = data-min(data)
-        data = data/max(data)
-        data = 2*data - 1
+        data = scaleData(data)
 
         return reshape(data,(1,self.windowSize,1))
 
@@ -167,7 +169,7 @@ class interface:
     
     def iter(self,open=None,close=None):
         prediction = self.fwp(open,close)
-        offset = -1
+        offset = -0
 
         if self.state != 0 and prediction[-self.predLen+offset] < 0.5:
             return self.short(close)

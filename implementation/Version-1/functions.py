@@ -1,5 +1,5 @@
 from csv import reader
-from classes import poi,pois, interface
+from classes import poi,pois, interface, scaleData
 from math import ceil
 from random import randint
 from multiprocessing import Pool
@@ -13,17 +13,6 @@ def getData(datafile):
     with open(datafile) as file:
         data = list(reader(file, delimiter=' '))
 
-    return data
-
-def scaleData(data):
-    ''' 
-    would it be better to normalize data by mean and variance
-
-    '''
-    data = data-min(data)
-    data = data/max(data)
-    data = 2*data - 1
-  
     return data
 
 def getSample(data,rate=30,k=10080,n=1440):
@@ -127,7 +116,7 @@ def evaluate(sample,model,window_size):
                 total = total*(1+temp)
                 delta += temp
                 entry = exit
-                print("long , total delta: %", delta, "   accuracy : %", int(100*wins/(wins+losses)))
+                print("minute: ",i+1," long , total delta: %", delta, "   accuracy : %", int(100*wins/(wins+losses)))
                 print("exp_total: ",total)
             elif not ls:
                 temp = exit-entry
@@ -141,12 +130,12 @@ def evaluate(sample,model,window_size):
                 total = total*(1+temp)
                 delta += 100*temp
                 entry = exit
-                print("short, total delta: %", delta, "   accuracy : %", int(100*wins/(wins+losses)))
+                print("minute: ",i+1," short, total delta: %", delta, "   accuracy : %", int(100*wins/(wins+losses)))
                 print("exp_total: ",total)
     
     print("\n\nTotal delta: %", delta, "   accuracy : %", int(100*wins/(wins+losses)))
     print("Total Trades: ",wins+losses)
     print("exp_total: ",total)
 
-    return delta, wins, losses
+    return delta, wins, losses, total
 
