@@ -1,9 +1,23 @@
 from csv import reader
 from classes import poi,pois, interface, scaleData
-from math import ceil
+from math import ceil,floor
 from random import randint
 from multiprocessing import Pool
 from numpy import zeros,append,linspace, round,reshape
+
+
+def getBatches(data,batch_size):
+    batches = []
+    for i in range(floor(len(data)/batch_size)):
+        temp = data[i*batch_size:(i+1)*(batch_size),:]
+        batches.append(temp)
+    return batches
+
+def combine(x,y):
+    data = []
+    for i in range(len(x)):
+        data.append([x[i],y[i]])
+    return data
 
 def getData(datafile):
     '''
@@ -66,11 +80,13 @@ def subsample(sample,nSamples=1e4,window_size=360,pred_len=5):
     def getSubsample(sample):
         xo = randint(0,len(sample.close)-1-window_size-pred_len)
         #lstm input dimensions are [ batch_size, timesteps, channels ]
-        xData.append(reshape(scaleData(sample.zeromean[xo:xo+window_size]),(window_size,1)))
+        #xData.append(reshape(scaleData(sample.zeromean[xo:xo+window_size]),(window_size,1)))
+        xData.append(reshape(scaleData(sample.zeromean[xo:xo+window_size]),(window_size)))
         #xRef.append(sample.data[xo:xo+window_size])
         #yRef.append(sample.binrep[xo:xo+window_size])
         xo += pred_len
-        yData.append(reshape(sample.binrep[xo:xo+window_size],(window_size,1)))
+        #yData.append(reshape(sample.binrep[xo:xo+window_size],(window_size,1)))
+        yData.append(reshape(sample.binrep[xo:xo+window_size],(window_size)))
 
     for i in range(int(nSamples)):
         getSubsample(sample)

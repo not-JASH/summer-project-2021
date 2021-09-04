@@ -9,8 +9,8 @@ from keras.layers import LSTM, Bidirectional, Dense, Activation, Dropout, Conv1D
 from keras.engine.input_layer import InputLayer as Input 
 from keras.callbacks import EarlyStopping
 
-def getModel(hiddenLayers = 128, batchSize = 32, windowSize = 100):
-    #batch size has been omitted from this version's input layer
+'''
+def getModel(hiddenLayers = 128, batchSize = 32, windowSize = 100)
     return Sequential([
         Input(input_shape=(windowSize,1)),
 
@@ -59,7 +59,7 @@ def trainModel(model,batch_size=None,xData=None,yData=None,learn_rate=None,no_sa
                       )]
                   )
        return model
-
+'''
 
 if __name__ == '__main__':  
 
