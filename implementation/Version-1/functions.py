@@ -80,13 +80,11 @@ def subsample(sample,nSamples=1e4,window_size=360,pred_len=5):
     def getSubsample(sample):
         xo = randint(0,len(sample.close)-1-window_size-pred_len)
         #lstm input dimensions are [ batch_size, timesteps, channels ]
-        #xData.append(reshape(scaleData(sample.zeromean[xo:xo+window_size]),(window_size,1)))
-        xData.append(reshape(scaleData(sample.zeromean[xo:xo+window_size]),(window_size)))
+        xData.append(reshape(scaleData(sample.zeromean[xo:xo+window_size]),(window_size,1)))
         #xRef.append(sample.data[xo:xo+window_size])
         #yRef.append(sample.binrep[xo:xo+window_size])
         xo += pred_len
-        #yData.append(reshape(sample.binrep[xo:xo+window_size],(window_size,1)))
-        yData.append(reshape(sample.binrep[xo:xo+window_size],(window_size)))
+        yData.append(reshape(sample.binrep[xo:xo+window_size],(window_size,1)))
 
     for i in range(int(nSamples)):
         getSubsample(sample)

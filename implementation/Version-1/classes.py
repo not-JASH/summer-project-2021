@@ -1,11 +1,13 @@
 from tensorflow import keras
-from keras.models import load_model
+from tensorflow.keras.models import load_model
 from binance.client import Client
 from numpy import argmax, argmin, zeros, reshape, mean, std
 
 def scaleData(data):
     #outlier detection?
-    return (data-mean(data))/std(data)
+    data = (data-mean(data))/std(data)
+    data = data - min(data)
+    return data
 
 class poi:
     def __init__(self,x,y):

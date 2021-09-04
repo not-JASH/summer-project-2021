@@ -9,8 +9,7 @@ from keras.layers import LSTM, Bidirectional, Dense, Activation, Dropout, Conv1D
 from keras.engine.input_layer import InputLayer as Input 
 from keras.callbacks import EarlyStopping
 
-'''
-def getModel(hiddenLayers = 128, batchSize = 32, windowSize = 100)
+def getModel(hiddenLayers = 128, batchSize = 32, windowSize = 100):
     return Sequential([
         Input(input_shape=(windowSize,1)),
 
@@ -59,7 +58,6 @@ def trainModel(model,batch_size=None,xData=None,yData=None,learn_rate=None,no_sa
                       )]
                   )
        return model
-'''
 
 if __name__ == '__main__':  
 
@@ -88,7 +86,10 @@ if __name__ == '__main__':
         xVal,yVal = array(xVal), array(yVal)
 
         start = time.time()
-        model = trainModel(getModel(hidden_layers,batch_size,window_size),
+        model = getModel(hidden_layers,batch_size,window_size)
+        print(model.summary())
+
+        model = trainModel(model,
                            batch_size=batch_size,
                            xData=xData,
                            yData=yData,
