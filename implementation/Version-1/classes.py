@@ -6,7 +6,6 @@ from numpy import argmax, argmin, zeros, reshape, mean, std
 def scaleData(data):
     #outlier detection?
     data = (data-mean(data))/std(data)
-    data = data - min(data)
     return data
 
 class poi:

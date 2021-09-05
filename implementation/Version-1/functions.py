@@ -5,20 +5,6 @@ from random import randint
 from multiprocessing import Pool
 from numpy import zeros,append,linspace, round,reshape
 
-
-def getBatches(data,batch_size):
-    batches = []
-    for i in range(floor(len(data)/batch_size)):
-        temp = data[i*batch_size:(i+1)*(batch_size),:]
-        batches.append(temp)
-    return batches
-
-def combine(x,y):
-    data = []
-    for i in range(len(x)):
-        data.append([x[i],y[i]])
-    return data
-
 def getData(datafile):
     '''
     read from file or download from binance?
@@ -95,8 +81,8 @@ def cycle(data,npt):
     data = data[1:]
     return append(data,npt)
 
-def evaluate(sample,model,window_size):
-    trader = interface(windowSize=window_size)
+def evaluate(sample,model,window_size,prediction_length):
+    trader = interface(windowSize=window_size, predLen=prediction_length)
     trader.model = model
 
     delta,entry,exit,wins,losses,temp = 0,0,0,0,0,0
@@ -142,7 +128,7 @@ def evaluate(sample,model,window_size):
                     losses += 1
                 
                 total = total*(1+temp)
-                delta += 100*temp
+                delta += temp
                 entry = exit
                 print("minute: ",i+1," short, total delta: %", delta, "   accuracy : %", int(100*wins/(wins+losses)))
                 print("exp_total: ",total)

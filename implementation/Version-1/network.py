@@ -100,6 +100,6 @@ if __name__ == '__main__':
 
         print("time elapsed: ", time.time()-start)
 
-        results[i][0], results[i][1], results[i][2], results[i][3] = evaluate(evalSamples[i],model,window_size)
+        results[i][0], results[i][1], results[i][2], results[i][3] = evaluate(evalSamples[i],model,window_size,prediction_length)
         
         print(results)
