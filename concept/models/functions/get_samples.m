@@ -9,8 +9,8 @@ function [training_samples,eval_samples] = get_samples(filename,no_samples,rate,
     end
     
     if no_samples == 1
-        training_samples{1}.addPoints;
-        eval_samples{1}.addPoints;
+        training_samples{1} = training_samples{1}.addPoints;
+        eval_samples{1} = eval_samples{1}.addPoints;
     else
         get_workers(min([6,no_samples]));
         parfor i = 1:no_samples

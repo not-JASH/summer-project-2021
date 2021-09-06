@@ -27,7 +27,7 @@ classdef interface
             loc = length(prediction)-obj.prediction_length+obj.offset;
             if obj.state ~= 0 && prediction(loc) < 0.5
                 [state,price] = obj.short(close);
-            elseif self.state ~= 1 && prediction(loc) > 0.5
+            elseif obj.state ~= 1 && prediction(loc) > 0.5
                 [state,price] = obj.long(close);
             else 
                 state = [];
@@ -35,12 +35,12 @@ classdef interface
             end
         end
         
-        function [state,price] = long(close)
+        function [state,price] = long(obj,close)
             state = true;
             price = close(end);            
         end
         
-        function [state,price] = short(close)
+        function [state,price] = short(obj,close)
             state = false;
             price = close(end);
         end
