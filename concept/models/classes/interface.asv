@@ -35,26 +35,20 @@ classdef interface
             loc = length(prediction)-obj.prediction_length+obj.offset;
             if obj.state ~= 0 && prediction(loc) < confidence_interval
 %             if obj.state ~= 0 && prediction(2,loc) > 1 - confidence_interval && prediction(1,loc) < confidence_interval
-                obj.l_counter = 0;
                 if (obj.s_counter == count_lim)
                     [state,price] = obj.short(close);
                     obj.state = 0;
-                    obj.s_counter = 0;
                 else
                     [state,price] = deal([],-1);
                     obj.s_counter = obj.s_counter+1;
+                    obj.l_counter = 0;
                 end
             elseif obj.state ~= 1 && prediction(loc) > 1 - confidence_interval
 %             elseif obj.state ~= 1 && prediction(1,loc) > 1 - confidence_interval && prediction(2,loc) < confidence_interval
-                obj.s_counter = 0;
-                if obj.l_counter == count_lim
-                    [state,price] = obj.long(close);
-                    obj.state = 1;
-                    obj.l_counter = 0;
-                else
-                    [state,price] = deal([],-1);
-                    obj.l_counter = obj.l_counter + 1;
-                end  
+                if obj.l_counter
+    
+                [state,price] = obj.long(close);
+                obj.state = 1;
             else 
                 [state,price] = deal([],-1);
             end
