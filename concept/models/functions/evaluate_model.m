@@ -1,5 +1,6 @@
-function [delta, wins, losses, total,trade_list] = evaluate_model(sample,model,window_size,prediction_length,verbose,plots,offset)
-    trader = interface(window_size,prediction_length,offset);
+function [delta, wins, losses, total,trade_list,model] = evaluate_model(sample,model,window_size,prediction_length,verbose,plots,offset,confidence_interval,heuristic_limit)
+    
+    trader = interface(window_size,prediction_length,offset,confidence_interval,heuristic_limit);
     trader.model = model;
     
     [delta,entry,wins,losses,total] = deal(0,0,0,0,1);
@@ -80,7 +81,8 @@ function [delta, wins, losses, total,trade_list] = evaluate_model(sample,model,w
     
     fprintf("Delta: %.2f\nAccuracy: %.2f%%\nTotal Trades: %d\nexp total: %.2f\n",delta,100*wins/(wins+losses),wins+losses,total);
     
-    
+    model = trader.model;    
+       
     function data = add_element(data,element)
        data = [data,element];
     end   
