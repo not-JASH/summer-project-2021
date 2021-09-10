@@ -22,9 +22,10 @@ function [delta, wins, losses, total,trade_list,model] = evaluate_model(sample,m
         end
         
         [trader,ls,exit,prediction] = trader.iter(wX,wClose);
+
         if plots
             yyaxis left
-            plot(prediction)
+            plot(gather(extractdata(prediction)))
             yline(0.5)
             yyaxis right
             plot(wClose)

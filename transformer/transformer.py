@@ -257,7 +257,7 @@ class MultiHeadAttention(Layer):
         v = inputs[1]
         k = inputs[2] if len(inputs) > 2 else v
 
-        query = self.w_value(q)
+        query = self.w_query(q)
         query = self.split_reshape_query(query)
         query = self.split_permute_query(query)
 

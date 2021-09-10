@@ -12,7 +12,7 @@ no_sets = 10;
 prediction_length = 0;
 time_before = 7*24*30;
 time_after = 1*24*60;
-confidence_interval = 0.5;
+confidence_interval = 0.4;
 heuristic_limit = 0;
 valid_split = 0.2;
 
@@ -30,42 +30,85 @@ lgraph = layerGraph();
 
 tempLayers = [
     sequenceInputLayer(1,"Name","sequence_2")
-    fullyConnectedLayer(256,"Name","fc_4")
+    fullyConnectedLayer(256,"Name","fc_2")
+    dropoutLayer(0.2,"Name","dropout_2")];
+lgraph = addLayers(lgraph,tempLayers);
+
+tempLayers = [
+    fullyConnectedLayer(256,"Name","fc_3")
     dropoutLayer(0.2,"Name","dropout_3")
-    bilstmLayer(128,"Name","bilstm_3")];
+    reluLayer("Name","relu_1")];
 lgraph = addLayers(lgraph,tempLayers);
 
 tempLayers = [
     sequenceInputLayer(1,"Name","sequence_1")
     fullyConnectedLayer(256,"Name","fc_1")
-    dropoutLayer(0.2,"Name","dropout_1")
-    bilstmLayer(128,"Name","bilstm_1")];
+    dropoutLayer(0.2,"Name","dropout_1")];
 lgraph = addLayers(lgraph,tempLayers);
 
 tempLayers = [
-    additionLayer(2,"Name","addition")
-    groupNormalizationLayer("channel-wise","Name","groupnorm")
-    fullyConnectedLayer(256,"Name","fc_2")
-    dropoutLayer(0.2,"Name","dropout_2")
-    bilstmLayer(128,"Name","bilstm_2")
-    fullyConnectedLayer(1,"Name","fc_3")
-    %regressionLayer("Name","regressionoutput")
-    ];
+    fullyConnectedLayer(256,"Name","fc_5")
+    dropoutLayer(0.2,"Name","dropout_5")
+    reluLayer("Name","relu_2")];
+lgraph = addLayers(lgraph,tempLayers);
+
+tempLayers = [
+    additionLayer(2,"Name","addition_3")
+    groupNormalizationLayer("channel-wise","Name","groupnorm_3")];
+lgraph = addLayers(lgraph,tempLayers);
+
+tempLayers = [
+    additionLayer(2,"Name","addition_1")
+    groupNormalizationLayer("channel-wise","Name","groupnorm_1")];
+lgraph = addLayers(lgraph,tempLayers);
+
+tempLayers = [
+    fullyConnectedLayer(256,"Name","fc_4")
+    dropoutLayer(0.2,"Name","dropout_4")];
+lgraph = addLayers(lgraph,tempLayers);
+
+tempLayers = [
+    additionLayer(2,"Name","addition_2")
+    groupNormalizationLayer("channel-wise","Name","groupnorm_2")];
+lgraph = addLayers(lgraph,tempLayers);
+
+tempLayers = [
+    concatenationLayer(1,2,"Name","concat")
+    fullyConnectedLayer(256,"Name","fc_6")
+    dropoutLayer(0.2,"Name","dropout_6")
+    reluLayer("Name","relu_3")];
+lgraph = addLayers(lgraph,tempLayers);
+
+tempLayers = [
+    additionLayer(2,"Name","addition_4")
+    groupNormalizationLayer("channel-wise","Name","groupnorm_4")
+    fullyConnectedLayer(256,"Name","fc_7")
+    dropoutLayer(0.2,"Name","dropout_7")
+    fullyConnectedLayer(1,"Name","fc_8")];
 lgraph = addLayers(lgraph,tempLayers);
 
 % clean up helper variable
 clear tempLayers;
 
-lgraph = connectLayers(lgraph,"bilstm_3","addition/in1");
-lgraph = connectLayers(lgraph,"bilstm_1","addition/in2");
-
-net = dlnetwork(lgraph);
-
+lgraph = connectLayers(lgraph,"dropout_2","fc_3");
+lgraph = connectLayers(lgraph,"dropout_2","addition_1/in1");
+lgraph = connectLayers(lgraph,"relu_1","addition_1/in2");
+lgraph = connectLayers(lgraph,"dropout_1","fc_5");
+lgraph = connectLayers(lgraph,"dropout_1","addition_3/in1");
+lgraph = connectLayers(lgraph,"relu_2","addition_3/in2");
+lgraph = connectLayers(lgraph,"groupnorm_3","concat/in1");
+lgraph = connectLayers(lgraph,"groupnorm_3","addition_4/in1");
+lgraph = connectLayers(lgraph,"groupnorm_1","fc_4");
+lgraph = connectLayers(lgraph,"groupnorm_1","addition_2/in2");
+lgraph = connectLayers(lgraph,"dropout_4","addition_2/in1");
+lgraph = connectLayers(lgraph,"groupnorm_2","concat/in2");
+lgraph = connectLayers(lgraph,"relu_3","addition_4/in2");
 
 %%  training loop
-models = cell(no_sets,1);
+model = cell(no_sets,1);
 
 for s = 1:no_sets
+    net = dlnetwork(lgraph);
     [train_samples,eval_samples] = get_samples(datafile,1,rate,time_before,time_after);
     [xData,yData] = subsample(train_samples{1},no_samples,window_size+1,prediction_length);
     [xVal,yVal] = subsample(eval_samples{1},valid_split*no_samples,window_size+1,prediction_length);
@@ -94,8 +137,8 @@ for s = 1:no_sets
     end
     fprintf("\nmodel evaluation\n\n");
     evaluate_model(...
-        eval_samples{1},net,window_size,prediction_length,false,false,0,confidence_interval,heuristic_limit);
-    models{s} = net;    
+        eval_samples{1},net,window_size,prediction_length,false,true,0,confidence_interval,heuristic_limit);
+    model{s} = net;    
     fprintf("\n");
 end
 
