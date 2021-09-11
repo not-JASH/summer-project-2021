@@ -89,43 +89,36 @@ classdef transformer
             
             % positional encoding
             x = x*sqrt(obj.d_model);
-            x = x+obj.encoder_pos(:,size(x,2),:); % is this the correct dimension
+            x = x + obj.encoder_pos(:,size(x,2),:); % is this the correct dimension
             
             x = obj.encoder_dropout.fw(x,dropout_rate);
             
             % encoder layer
             %embedding_mask = obj.encoder_embedding.compute_mask(inputs);
-            embedding_mask = [];            
+            embedding_mask = [];
+            
             for i = 1:length(obj.encoder_layers)
                 x = obj.encoder_layers{i}.fw(x,embedding_mask);
             end
             
         end
         
-        function x = decoder_fw(obj,inputs,dropout_rate)
+        function x = decoder_fw(obj,inputs)
             
             %{
                 9/10/2021
-                
-                how to calcualte an embedding mask               
+               
                 
             
             %}
             
             x = obj.decoder_embedding(inputs{1});
             
-            % positional encoding
-            x = x*sqrt(obj.d_model);
-            x = x+obj.decoder_pos(:,size(shape,1),:);
+            %positiona
             
-            x = obj.decoder_dropout(x,dropout_rate);
             
-            % decoder layers
-            %embedding_mask = obj.decoder_embedding.compute_mask(inputs{1})
-            embedding_mask = [];
-            for i = 1:length(obj.decoder_layers)
-                x = obj.decoder_layer{i}.fw({x,inputs{2}},embedding_mask);
-            end
+            
+            
         end
         
         function y = fw(obj,x)

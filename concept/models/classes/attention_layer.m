@@ -1,4 +1,4 @@
-classdef attention 
+classdef attention_layer
     properties 
         causal
         dropout        

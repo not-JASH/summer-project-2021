@@ -1,4 +1,4 @@
-classdef multi_head_attention 
+classdef multi_head_attention_layer
     
     properties
         
@@ -42,19 +42,22 @@ classdef multi_head_attention
             %obj.split_reshape_value = reshape_layer([],no_heads,depth,"split_reshape_value_"+num2str(count));
             %obj.split_permute_value = permute_layer([2 1 3],"split_permute_value_"+num2str(count));
             
-            obj.w_key = fullyConnectedLayer(d_model,'Name',"w_key_"+num2str(count));
+            obj.w_key = fully_connected_layer(d_model,input_channels,"w_key_"+num2str(count));
             %obj.split_reshape_key = reshape_layer([],no_heads,depth,"split_reshape_key_"+num2str(count));
             %obj.split_permute_key = permute_layer([2 1 3],"split_permute_key_"+num2str(count));
             
-            obj.attention = attention(causal,dropout);
+            obj.attention = attention_layer(causal,dropout);
             %obj.join_permute_attention = permute_layer([2 1 3],"join_permute_attention_"+num2str(count));
             %obj.join_reshape_attention = reshape_layer([],d_model,1,"join_reshape_attention_"+num2str(count));
             
-            obj.dense = fully_connected_layer(d_model,input_channels,'Name',"dense_"+num2str(count));    
+            obj.dense = fully_connected_layer(d_model,input_channels,"dense_"+num2str(count));    
         end
         
         function x = fw(obj,inputs,mask)
             %make sure batch size is 3rd (4th?) dimension
+            %dl array formats inputs such that it is 'CBT'
+            %this means that before arrays are reshaped into parallel
+            %attention layers, inputs must be rearranged to 'CTB'            
             
             q = inputs{1};
             v = inputs{2};
@@ -68,15 +71,18 @@ classdef multi_head_attention
             assert(batch_size == size(v,3) && batch_size == size(k,3),...
                 "inconsistent batch sizes between inputs");
             
-            query = obj.w_query.fw(q);
+            query = obj.w_query.fw(q); %output dimensions at this step are expected to be 'CBT'
+            query = rearrange(query);
             query = reshape(query,[],no_heads,obj.depth,batch_size);    % split_reshape_query
             query = permute(query,[2 1 3 4]);                           % split_permute_query
             
             value = obj.w_value.fw(v);
+            value = rearrange(value);
             value = reshape(value,[],no_heads,obj.depth,batch_size);    %split_reshape_value
             value = permute(value,[2 1 3 4]);                           %split_permute_value
             
             key = obj.w_key.fw(k);
+            key = rearrange(key);
             key = reshape(key,[],no_heads,obj.depth,batch_size);        %split_reshape_key
             key = permute(key,[2 1 3 4]);                               %split_permute_key
             
@@ -93,18 +99,19 @@ classdef multi_head_attention
 %             end
             
             x_attention = obj.attention.fw({query, value, key},mask);
-            x_attention = permute(x_attention,[2 1 3]);         %join_permute_attention
+            x_attention = permute(x_attention,[2 1 3 4]);       %join_permute_attention
             x_attention = reshape(x_attention,[],d_model,1);    %join_reshape_attention
+            
+            size(x_attention);
                        
             x = obj.dense.fw(x_attention);
-        end
-        
-        function [] = forward(layer)
             
-        end
-        
-        function [] = backward(layer)
             
-        end            
+            
+            function data = rearrange(data)
+                data = reshape(data,size(data)); %remove labels
+                data = permute(data,[1 3 2]);                        
+            end
+        end
     end
 end
