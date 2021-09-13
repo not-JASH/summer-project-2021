@@ -19,10 +19,13 @@ classdef transformer
         decoder_layers
         decoder_dropout
         
+        % dense (fully connected)
+        dense
+        
     end
     
     methods
-        function obj = transformer(input_channels,target_size,no_layers,d_model,no_heads,dff,dropout_rate)
+        function [obj,weights] = transformer(input_channels,target_size,no_layers,d_model,no_heads,dff,dropout_rate)
 
             
             %{
@@ -43,12 +46,14 @@ classdef transformer
             
             %   initialize encoder weights & layers
             
-            obj.encoder_embedding = fully_connected_layer(d_model,input_channels,"encoder_embedding");
+            [obj.encoder_embedding,weights.encoder_embedding] = ...
+                fully_connected_layer(d_model,input_channels,"encoder_embedding");
             obj.encoder_pos = obj.positional_encoding(maximum_position_encoding,d_model);
             obj.encoder_pos = permute(obj.encoder_pos,[3 1 2]);
             
             for i = 1:no_layers
-                obj.encoder_layers{i} = encoder_layer(d_model,d_model,no_heads,dff,dropout_rate);
+                [obj.encoder_layers{i},weights.encoder_layers{i}] = ...
+                    encoder_layer(d_model,d_model,no_heads,dff,dropout_rate);
             end
             
             obj.encoder_dropout = dropout_layer;  
@@ -56,19 +61,22 @@ classdef transformer
             
             %   initialize decoder weights & layers
             
-            obj.decoder_embedding = fully_connected_layer(target_size,d_model,"decoder_embedding");
+            [obj.decoder_embedding,weights.decoder_embedding] = ...
+                fully_connected_layer(d_model,input_channels,"decoder_embedding");
             obj.decoder_pos = obj.positional_encoding(maximum_position_encoding,d_model);
             obj.decoder_pos = permute(obj.decoder_pos,[3 1 2]);
             
             for i = 1:no_layers
-                obj.decoder_layers{i} = decoder_layer(target_size,d_model,no_heads,dff,dropout_rate);
+                [obj.decoder_layers{i},weights.decoder_layers{i}] = ...
+                    decoder_layer(d_model,d_model,no_heads,dff,dropout_rate);
             end
             
             obj.decoder_dropout = dropout_layer;
             
+            [obj.dense,weights.dense] = fully_connected_layer(target_size,d_model,"transformer_dense");            
         end
        
-        function x = encoder_fw(obj,inputs,dropout_rate)
+        function x = encoder_fw(obj,inputs,dropout_rate,weights)
 
             %{
             
@@ -79,7 +87,7 @@ classdef transformer
             
             %}           
             
-            x = obj.encoder_embedding.fw(inputs);
+            x = obj.encoder_embedding.fw(inputs,weights.encoder_embedding);
 
             % positional encoding
             x = x*sqrt(obj.d_model);
@@ -92,13 +100,12 @@ classdef transformer
             embedding_mask = [];            
 
             for i = 1:length(obj.encoder_layers)
-                fprintf("current layer: %d\n",i)
-                x = obj.encoder_layers{i}.fw(x,embedding_mask,dropout_rate);
+                x = obj.encoder_layers{i}.fw(x,embedding_mask,dropout_rate,weights.encoder_layers{i});
             end
             
         end
         
-        function x = decoder_fw(obj,inputs,dropout_rate)
+        function x = decoder_fw(obj,inputs,dropout_rate,weights)
             
             %{
                 9/10/2021
@@ -107,29 +114,30 @@ classdef transformer
                 
             
             %}
-            
-            x = obj.decoder_embedding(inputs{1});
+      
+            x = obj.decoder_embedding.fw(inputs{1},weights.decoder_embedding);
             
             % positional encoding
             x = x*sqrt(obj.d_model);
-            x = x+obj.decoder_pos(size(x));
+            x = x+obj.decoder_pos(:,:,1:size(x,3));
             
-            x = obj.decoder_dropout(x,dropout_rate);
+            x = obj.decoder_dropout.fw(x,dropout_rate);
             
             % decoder layers
             %embedding_mask = obj.decoder_embedding.compute_mask(inputs{1})
             embedding_mask = [];
             for i = 1:length(obj.decoder_layers)
-                x = obj.decoder_layer{i}.fw({x,inputs{2}},embedding_mask);
+                x = obj.decoder_layers{i}.fw({x,inputs{2}},embedding_mask,dropout_rate,weights.decoder_layers{i});
             end
         end
         
-        function y = fw(obj,inputs,targets,dropout_rate)
+        function y = fw(obj,inputs,targets,dropout_rate,weights)
             
-            y = obj.encoder_fw(inputs,dropout_rate);
+            y = obj.encoder_fw(inputs,dropout_rate,weights);
             
-            y = obj.decoder_fw({targets,y},dropout_rate);
+            y = obj.decoder_fw({targets,y},dropout_rate,weights);
             
+            y = obj.dense.fw(y,weights.dense);            
         end
    
         function pos_encoding = positional_encoding(obj,position,d_model)

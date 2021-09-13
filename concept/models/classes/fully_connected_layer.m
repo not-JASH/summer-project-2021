@@ -1,19 +1,20 @@
 classdef fully_connected_layer
     properties
         name
-        weights
-        bias
     end
     
     methods
-        function obj = fully_connected_layer(output_features,input_channels,name)
+        function [obj,weights] = fully_connected_layer(output_features,input_channels,name)
             obj.name = name;
-            obj.weights = gpudl(rand(output_features,input_channels),'');
-            obj.bias = gpudl(rand(output_features,1),'');
+            
+            weights.weights = gpudl(rand(output_features,input_channels),'');
+            weights.bias = gpudl(rand(output_features,1),'');
         end 
-        
-        function y = fw(obj,x,varargin)
-           y = fullyconnect(x,obj.weights,obj.bias,varargin{:});
+    end
+    
+    methods (Static)
+        function y = fw(x,weights,varargin)
+           y = fullyconnect(x,weights.weights,weights.bias,varargin{:});
         end
     end
 end
