@@ -13,7 +13,7 @@ classdef encoder_layer
     end
     
     methods
-        function obj = encoder_layer(input_channels,d_model,no_heads,dff,dropout)
+        function obj = encoder_layer(input_channels,d_model,no_heads,dff,dropout_rate)
             
             persistent count
             if isempty(count) 
@@ -22,10 +22,10 @@ classdef encoder_layer
             count = count+1;
             
             obj.multi_head_attention = ...
-               multi_head_attention_layer(input_channels,d_model,no_heads,false,dropout); 
+               multi_head_attention_layer(input_channels,d_model,no_heads,false,dropout_rate); 
             obj.dropout_attention = dropout_layer; 
             %obj.add_attention = addition_layer;
-            obj.layer_norm_attention = layer_normalizationlayer;
+            obj.layer_norm_attention = layer_normalization_layer;
            
             obj.dense1 = fully_connected_layer(dff,d_model,'dense1_'+num2str(count));
             obj.dense2 = fully_connected_layer(d_model,dff,'dense2_'+num2str(count));
@@ -34,7 +34,7 @@ classdef encoder_layer
             obj.layer_norm_dense = layer_normalization_layer;
         end
         
-        function x = fw(obj,inputs,mask)
+        function x = fw(obj,inputs,mask,dropout_rate)
             
             %{
                 9/10/2021 
@@ -44,12 +44,10 @@ classdef encoder_layer
             %}
             
             
-            
-            dropout_rate = 0.3;
-            
             %   multihead attention
             attention = obj.multi_head_attention.fw({inputs,inputs,inputs},mask);
-            attention = obj.dropout_layer.fw(attention,dropout_rate);   %
+            attention = obj.dropout_attention.fw(attention,dropout_rate);   
+            
             x = attention + inputs;
             x = obj.layer_norm_attention.fw(x);
             

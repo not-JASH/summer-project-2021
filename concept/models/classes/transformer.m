@@ -22,15 +22,8 @@ classdef transformer
     end
     
     methods
-        function obj = transformer(input_channels,target_size,no_layers,d_model,no_heads,dff,dropout)
-            
-            obj.d_model = d_model;
-            
-            
-            
-        end
-        
-        function obj = init_encoder(obj,input_channels,no_layers,d_model,no_heads,dff,dropout)
+        function obj = transformer(input_channels,target_size,no_layers,d_model,no_heads,dff,dropout_rate)
+
             
             %{
                 9/10/2021
@@ -42,40 +35,41 @@ classdef transformer
                 it act along the correct dimensions          
             %}
             
+            
             maximum_position_encoding = 1e4;
+            
+            obj.d_model = d_model;
+            
+            
+            %   initialize encoder weights & layers
             
             obj.encoder_embedding = fully_connected_layer(d_model,input_channels,"encoder_embedding");
             obj.encoder_pos = obj.positional_encoding(maximum_position_encoding,d_model);
+            obj.encoder_pos = permute(obj.encoder_pos,[3 1 2]);
             
             for i = 1:no_layers
-                obj.encoder_layers{i} = encoder_layer(input_channels,d_model,no_heads,dff,dropout);
+                obj.encoder_layers{i} = encoder_layer(d_model,d_model,no_heads,dff,dropout_rate);
             end
             
-            obj.encoder_dropout = dropout_layer;         
-        end
-        
-        function obj = init_decoder(obj,target_size,no_layers,d_model,no_heads,dff,dropout)
+            obj.encoder_dropout = dropout_layer;  
             
-            %{
-                9/10/2021
             
-                same blurb as in init_decoder
-            %}
-            
-            maximum_position_encoding = 1e4;
+            %   initialize decoder weights & layers
             
             obj.decoder_embedding = fully_connected_layer(target_size,d_model,"decoder_embedding");
             obj.decoder_pos = obj.positional_encoding(maximum_position_encoding,d_model);
+            obj.decoder_pos = permute(obj.decoder_pos,[3 1 2]);
             
             for i = 1:no_layers
-                obj.decoder_layers{i} = decoder_layer(target_size,d_model,no_heads,dff,dropout);
+                obj.decoder_layers{i} = decoder_layer(target_size,d_model,no_heads,dff,dropout_rate);
             end
             
             obj.decoder_dropout = dropout_layer;
-        end
-        
-        function x = encoder_fw(obj,inputs,dropout_rate)
             
+        end
+       
+        function x = encoder_fw(obj,inputs,dropout_rate)
+
             %{
             
                 9/10/2021
@@ -84,20 +78,22 @@ classdef transformer
                 what happens if inputs is a cell array 
             
             %}           
-                        
-            x = obj.encoder_embedding.fw(inputs);
             
+            x = obj.encoder_embedding.fw(inputs);
+
             % positional encoding
             x = x*sqrt(obj.d_model);
-            x = x+obj.encoder_pos(:,size(x,2),:); % is this the correct dimension
+            x = x+obj.encoder_pos(:,:,1:size(x,3)); % is this the correct dimension
             
             x = obj.encoder_dropout.fw(x,dropout_rate);
             
             % encoder layer
             %embedding_mask = obj.encoder_embedding.compute_mask(inputs);
             embedding_mask = [];            
+
             for i = 1:length(obj.encoder_layers)
-                x = obj.encoder_layers{i}.fw(x,embedding_mask);
+                fprintf("current layer: %d\n",i)
+                x = obj.encoder_layers{i}.fw(x,embedding_mask,dropout_rate);
             end
             
         end
@@ -116,7 +112,7 @@ classdef transformer
             
             % positional encoding
             x = x*sqrt(obj.d_model);
-            x = x+obj.decoder_pos(:,size(shape,1),:);
+            x = x+obj.decoder_pos(size(x));
             
             x = obj.decoder_dropout(x,dropout_rate);
             
@@ -128,25 +124,30 @@ classdef transformer
             end
         end
         
-        function y = fw(obj,x)
+        function y = fw(obj,inputs,targets,dropout_rate)
+            
+            y = obj.encoder_fw(inputs,dropout_rate);
+            
+            y = obj.decoder_fw({targets,y},dropout_rate);
             
         end
-        
+   
         function pos_encoding = positional_encoding(obj,position,d_model)
-            angle_rads = obj.get_angles([1:position],[1:position]',d_model);
-            
+            angle_rads = obj.get_angles([1:position]',[1:d_model],d_model);
+
             % apply sin to even indicies in array 
-            angle_rads(:,2:2:position) = sin(angle_rads(:,2:2:position));
+            angle_rads(:,2:2:end) = sin(angle_rads(:,2:2:end));
             
             % apply cos to odd indicies in array
-            angle_rads(:,1:2:position) = cos(angle_rads(:,1:2:position));
+            angle_rads(:,1:2:end) = cos(angle_rads(:,1:2:end));
             
             pos_encoding = reshape(angle_rads,[1 size(angle_rads)]);          
         end
         
         function angle_rates = get_angles(obj,pos,i,d_model)
-            angle_rates = 1/power(10000,(2*(i/2)/d_model));
-            angle_rates = angle_rates*pos;
+            angle_rates = 1./power(10000,(2*(i/2)/d_model));
+            
+            angle_rates = angle_rates.*pos;
         end
     end
 end

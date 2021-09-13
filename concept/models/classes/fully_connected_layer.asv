@@ -13,7 +13,7 @@ classdef fully_connected_layer
         end 
         
         function y = fw(obj,x,varargin)
-           y = fullyconnect(x,obj.weights,obj.bias,varargin{:});
+           y = fullyconnect(x,obj.weights,obj.bias,varargin);
         end
     end
 end

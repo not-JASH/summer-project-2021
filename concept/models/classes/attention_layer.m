@@ -5,7 +5,7 @@ classdef attention_layer
     end
         
     methods 
-        function obj = attention(causal,dropout)
+        function obj = attention_layer(causal,dropout)
             obj.causal = causal;
             %layer.dropout = dropoutlayer(dropout)
             
@@ -21,18 +21,22 @@ classdef attention_layer
                 k = v;
             end
             
-            batch_size = size(q,4);
-            assert(batch_size == size(v,4) && batch_size == size(k,4),...
+            batch_size = size(q,2);
+            assert(batch_size == size(v,2) && batch_size == size(k,2),...
                 "inconsistent batch sizes between inputs");
             
-            dk = size(q,2); %which dimension is the key dimension?
+            dk = size(q,3); %which dimension is the key dimension?
             
-            q = permute(q,[2 1 3 4]);
-            v = permute(v,[2 1 3 4]);
-            k = permute(k,[2 1 3 4]);
+            % [ depth batch_size channels timesteps] 
+            % => [channels timesteps depth batch_size]
             
+            
+            q = permute(q,[3 4 1 2]);
+            v = permute(v,[3 4 1 2]);
+            k = permute(k,[3 4 1 2]);
+                        
             attention = pagemtimes(q,permute(k,[2 1 3 4]));
-            attention = softmax(attention/sqrt(dk));
+            attention = softmax(attention/sqrt(dk),'dataformat','CTSB');
             attention = pagemtimes(attention,v);
             
             attention = permute(attention,[2 1 3 4]);

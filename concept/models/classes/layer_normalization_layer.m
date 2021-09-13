@@ -6,8 +6,10 @@ classdef layer_normalization_layer
     methods
         function obj = layer_normalization_layer
         end
-        
-        function x = fw(obj,x,varargin)
+    end
+    
+    methods (Static)
+        function x = fw(x,varargin)
             x = layernorm(x,varargin{:});
         end
     end

@@ -103,10 +103,12 @@ classdef multi_head_attention_layer
 %                     mask{2} = permute(mask{2},[2 1]);
 %                 end
 %             end
-            
-            x_attention = obj.attention.fw({query, value, key},mask);
-            x_attention = permute(x_attention,[2 1 3 4]);       %join_permute_attention
-            x_attention = reshape(x_attention,obj.d_model,batch_size,[]);    %join_reshape_attention
+            1
+            x_attention = obj.attention.fw({query, value, key},mask);2
+            x_attention = permute(x_attention,[2 1 3 4]);    3   %join_permute_attention
+            size(x_attention)
+            batch_size
+            x_attention = reshape(x_attention,obj.d_model,batch_size,[]);  4  %join_reshape_attention
             
             size(x_attention)
                        

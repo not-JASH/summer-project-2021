@@ -10,7 +10,7 @@ rate = 30;
 no_samples = 1e4;
 no_sets = 10;
 prediction_length = 0;
-time_before = 7*24*30;
+time_before = 7*24*60;
 time_after = 1*24*60;
 confidence_interval = 0.4;
 heuristic_limit = 0;
@@ -129,6 +129,8 @@ for s = 1:no_sets
             xBatch = prepare_batch(xData(locs(batch)),'CTB');
             yBatch = prepare_batch(yData(locs(batch)),'CTB');
             
+            size(xBatch);
+            
             [gradients,loss,net] = dlfeval(@model_gradients,net,xBatch,yBatch);
             [net,avg_g,avg_sqg] = adamupdate(net,gradients,avg_g,avg_sqg,gc,learn_rate);      
         end
@@ -148,10 +150,6 @@ function batch = prepare_batch(data,labels)
     batch = cell2mat(data);
     batch = reshape(batch,[1, size(batch,2), size(batch,1)]);
     batch = gpudl(batch,labels);
-end
-
-function data = gpudl(data,labels)
-    data = gpuArray(dlarray(data,labels));  
 end
 
 function [gradients,loss,network] = model_gradients(network,xBatch,yBatch)
