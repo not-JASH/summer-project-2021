@@ -8,14 +8,15 @@ datafile = "BTCUSDT.txt";
 
 % data generation varaiables
 
-window_size = 90;
+window_size = 60;
 rate = 30;
-no_samples = 1e4;
-no_sets = 10;
-prediction_length = 0;
-time_before = 7*24*60;
+no_samples = 5e4;
+no_sets = 1;
+prediction_length = 1;
+time_before = 90*24*60;
 time_after = 1*24*60;
-
+no_bins = 1024;
+cutoff = 0.01;
 
 % trader variables
 
@@ -24,16 +25,16 @@ heuristic_limit = 0;
 
 % training variables
 
-dropout_rate = 0.0;
-batch_size = 32;
+dropout_rate = 0.3;
+batch_size = 128;
 learn_rate = 1e-3;
-max_epochs = 30;
+max_epochs = 100;
 valid_split = 0.2;
 
 % transformer variables
 
 input_channels = 1; 
-target_size = 1; 
+% target_size = 1; 
 no_layers = 4;
 d_model = 512;
 no_heads = 8;
@@ -43,6 +44,8 @@ dff = 2048;
 %% training loop
 
 model = cell(no_sets,1);
+bins = get_bins(datafile,no_bins,cutoff);
+target_size = length(bins);
 
 for s = 1:no_sets
     
@@ -52,9 +55,9 @@ for s = 1:no_sets
         input_channels,target_size,no_layers,d_model,no_heads,dff,dropout_rate);
     
     [train_samples,eval_samples] = get_samples(datafile,1,rate,time_before,time_after);
-    [xData,yData] = subsample(train_samples{1},no_samples,window_size+1,prediction_length);
+    [xData,yData,yBin,yRef,y] = subsample(train_samples{1},no_samples,window_size+1,prediction_length,bins);
     %[xVal,yVal] = subsample(eval_samples{1},valid_split*no_samples,window_size+1,prediction_length);
-    
+
     clear train_samples
     
     gc = 1;                         % global iteration count
@@ -71,10 +74,15 @@ for s = 1:no_sets
             batch = [1:1+batch_size-1];
             batch(batch>no_samples) = [];
             
-            xBatch = prepare_batch(xData(locs(batch)),'CTB',input_channels);
-            yBatch = prepare_batch(yData(locs(batch)),'CTB',input_channels);
+            xBatch = prepare_batch(xData(locs(batch)));
+            xBatch = xBatch/target_size;
             
-            [gradients,loss,net] = dlfeval(@model_gradients,net,weights,xBatch,yBatch,dropout_rate);
+            yBatch = prepare_batch(yData(locs(batch)));
+            
+            yrBatch = prepare_batch(yRef(locs(batch)));
+            yrBatch = yrBatch/target_size;
+                        
+            [gradients,loss,net] = dlfeval(@model_gradients,net,weights,xBatch,yBatch,yrBatch,dropout_rate);
             [weights,avg_g,avg_sqg] = adamupdate(weights,gradients,avg_g,avg_sqg,gc,learn_rate);
         end
         
@@ -90,18 +98,21 @@ end
 
 %% helper functions
 
-function batch = prepare_batch(data,labels,no_channels)
-    
-    batch = cell2mat(data);
-    batch = reshape(batch,[no_channels size(batch,2) size(batch,1)]);
-    batch = gpudl(batch,labels);
+function batch = prepare_batch(data)
+    batch = data{1};
+    for i = 2:length(data)
+        batch = cat(3,batch,data{i});
+    end
+    batch = gpudl(batch,'CTB');
 end
 
-function [gradients,loss,network] = model_gradients(network,weights,xBatch,yBatch,dropout_rate)
+function [gradients,loss,network] = model_gradients(network,weights,xBatch,yBatch,yrBatch,dropout_rate)
 
-    y = network.fw(xBatch(:,:,2:end),yBatch(:,:,1:end-1),dropout_rate,weights);
-    size(y)
+    y = network.fw(xBatch(:,:,2:end),yrBatch(:,:,1:end-1),dropout_rate,weights);
+    y = softmax(y);
+    
     loss = sqrt(sum(power(y-yBatch(:,:,2:end),2),'all')/numel(y));
+    fprintf("batch loss: %.2f\n",loss);
     
     gradients = dlgradient(loss,weights);
 end

@@ -10,7 +10,8 @@ classdef dropout_layer
     
     methods (Static)
         function data = fw(data,rate)
-           % rate% of data = 0 
+            %   nice 
+            data(normrnd(0,0.1,size(data)) < norminv(rate,0,0.1)) = 0;
         end
     end
 end
