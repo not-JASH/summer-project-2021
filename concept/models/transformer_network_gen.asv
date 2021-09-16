@@ -121,7 +121,9 @@ function [gradients,loss,network] = model_gradients(network,weights,xBatch,yBatc
         [~,x] = max(y);
         accuracy = 100*sum(gatext(reshape(yrBatch(:,:,2:end),size(x,2),size(x,3))) == gatext(reshape(x,size(x,2),size(x,3))),'all')/numel(x);
         fprintf("batch loss: %.2f\taccuracy: %%%.2f\n",loss,accuracy);
-    end   
+    end
+    
+    
     
     gradients = dlgradient(loss,weights);
 end
