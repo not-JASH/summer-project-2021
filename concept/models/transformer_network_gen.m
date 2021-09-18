@@ -13,7 +13,7 @@ rate = 30;
 no_samples = 1e4;
 no_sets = 1;
 prediction_length = 1;
-time_before = 7*24*60;
+time_before = 30*24*60;
 time_after = 1*24*60;
 no_bins = 1024;
 cutoff = 0.01;
@@ -27,7 +27,7 @@ heuristic_limit = 0;
 
 dropout_rate = 0.3;
 batch_size = 128;
-learn_rate = 1e-3;
+learn_rate = 1e-5;
 max_epochs = 100;
 valid_split = 0.2;
 
@@ -64,8 +64,16 @@ for s = 1:no_sets
     [avg_g,avg_sqg] = deal([],[]);  % average gradients, average squared gradients (adam)
     tic;                            % start timer
     
-    for epoch = 1:max_epochs
-        
+    %for epoch = 1:max_epochs
+    epoch = 0;
+    while 1
+        epoch = epoch + 1;
+        if epoch == 20
+            learn_rate = 100*learn_rate;
+        elseif epoch > 20 && rem(epoch,5) == 0
+            learn_rate = learn_rate*0.8;
+        end
+    
         locs = randperm(no_samples);% shuffle data
         
         for i = 1:batch_size:no_samples
@@ -115,13 +123,14 @@ function [gradients,loss,network] = model_gradients(network,weights,xBatch,yBatc
 
     y = network.fw(xBatch(:,:,2:end),yrBatch(:,:,1:end-1),dropout_rate,weights);
     y = softmax(y);
-    loss = sqrt(sum(power(y-yBatch(:,:,2:end),2),'all')/numel(y));
     
-    if rem(i,10) == 0
-        [~,x] = max(y);
-        accuracy = 100*sum(gatext(reshape(yrBatch(:,:,2:end),size(x,2),size(x,3))) == gatext(reshape(x,size(x,2),size(x,3))),'all')/numel(x);
-        fprintf("batch loss: %.2f\taccuracy: %%%.2f\n",loss,accuracy);
-    end   
+    [~,x] = max(y);
+    accuracy = 100*sum(gatext(reshape(yrBatch(:,:,2:end),size(x,2),size(x,3))) == gatext(reshape(x,size(x,2),size(x,3))),'all')/numel(x);
+    
+    %loss = sqrt(sum(power(y-yBatch(:,:,2:end),2),'all')/numel(y));
+    loss = crossentropy(y,yBatch(:,:,2:end));
+
+    fprintf("batch loss: %.2f\taccuracy: %%%.2f\n",loss,accuracy);
     
     gradients = dlgradient(loss,weights);
 end
