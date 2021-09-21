@@ -10,10 +10,10 @@ datafile = "BTCUSDT.txt";
 
 window_size = 60;
 rate = 30;
-no_samples = 1e4;
+no_samples = 5e4;
 no_sets = 1;
 prediction_length = 1;
-time_before = 30*24*60;
+time_before = 90*24*60;
 time_after = 1*24*60;
 no_bins = 1024;
 cutoff = 0.01;
@@ -36,9 +36,9 @@ valid_split = 0.2;
 input_channels = 1; 
 % target_size = 1; 
 no_layers = 4;
-d_model = 512;
+d_model = 256;
 no_heads = 8;
-dff = 2048;
+dff = 1024;
 
 
 %% training loop
@@ -66,11 +66,12 @@ for s = 1:no_sets
     
     %for epoch = 1:max_epochs
     epoch = 0;
+    fprintf("Starting training loop #%d\n",s);
     while 1
         epoch = epoch + 1;
-        if epoch == 20
+        if epoch == 40
             learn_rate = 100*learn_rate;
-        elseif epoch > 20 && rem(epoch,5) == 0
+        elseif epoch > 40 && rem(epoch,10) == 0
             learn_rate = learn_rate*0.8;
         end
     
@@ -90,11 +91,11 @@ for s = 1:no_sets
             yrBatch = prepare_batch(yRef(locs(batch)));
             yrBatch = yrBatch/target_size;
                         
-            [gradients,loss,net] = dlfeval(@model_gradients,net,weights,xBatch,yBatch,yrBatch,dropout_rate);
+            [gradients,loss,accuracy,net] = dlfeval(@model_gradients,net,weights,xBatch,yBatch,yrBatch,dropout_rate);
             [weights,avg_g,avg_sqg] = adamupdate(weights,gradients,avg_g,avg_sqg,gc,learn_rate);
         end
         
-        fprintf("epoch:\t%d, time_elapsed:\t%.2fs\tloss:\t%.2f\n",epoch,toc,loss);     
+        fprintf("epoch:\t%d, time_elapsed:\t%.2fs\tloss:\t%.2f\taccuracy: %%%.2f\n",epoch,toc,loss,accuracy);     
     end
     
 %     fprintf("\nmodel evaluation\n\n");
@@ -114,7 +115,7 @@ function batch = prepare_batch(data)
     batch = gpudl(batch,'CTB');
 end
 
-function [gradients,loss,network] = model_gradients(network,weights,xBatch,yBatch,yrBatch,dropout_rate)
+function [gradients,loss,accuracy,network] = model_gradients(network,weights,xBatch,yBatch,yrBatch,dropout_rate)
     persistent i
     if isempty(i)
         i = 0;
@@ -130,7 +131,7 @@ function [gradients,loss,network] = model_gradients(network,weights,xBatch,yBatc
     %loss = sqrt(sum(power(y-yBatch(:,:,2:end),2),'all')/numel(y));
     loss = crossentropy(y,yBatch(:,:,2:end));
 
-    fprintf("batch loss: %.2f\taccuracy: %%%.2f\n",loss,accuracy);
+    %fprintf("batch loss: %.2f\taccuracy: %%%.2f\n",loss,accuracy);
     
     gradients = dlgradient(loss,weights);
 end
