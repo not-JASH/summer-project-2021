@@ -1,4 +1,5 @@
 function data = cat_delta(data,bins)
+    %converts a dx signal to a sequence of categorical integers
 
     for pt = 1:length(data)
         

@@ -7,7 +7,7 @@ api_key     = ""
 api_secret  = ""
 
 client=Client(api_key,api_secret)
-klines=client.get_historical_klines("SHIBUSDT",client.KLINE_INTERVAL_1MINUTE,"January,01,2021","August,30,2021")
-textname = "SHIBUSDT.txt"
+klines=client.get_historical_klines("BTCUSDT",client.KLINE_INTERVAL_5MINUTE,"January,01,2021","September,20,2021")
+textname = "BTCUSDT_5M.txt"
 savetxt("./"+textname,klines,delimiter=" ",fmt="%s")
 

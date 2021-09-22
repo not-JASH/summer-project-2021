@@ -1,20 +1,19 @@
 addpath("classes","functions","models");
 clear_env();
 
-
 %% define variables
 
-datafile = "BTCUSDT.txt";
+datafile = "BTCUSDT_5M.txt";
 
 % data generation varaiables
 
-window_size = 60;
-rate = 30;
-no_samples = 5e4;
+window_size = 12;
+rate = 4;
+no_samples = 1e4;
 no_sets = 1;
 prediction_length = 1;
-time_before = 90*24*60;
-time_after = 1*24*60;
+time_before = 90*24*60/5;
+time_after = 1*24*60/5;
 no_bins = 1024;
 cutoff = 0.01;
 
@@ -26,8 +25,8 @@ heuristic_limit = 0;
 % training variables
 
 dropout_rate = 0.3;
-batch_size = 128;
-learn_rate = 1e-5;
+batch_size = 512;
+% learn_rate = 1e-5;
 max_epochs = 100;
 valid_split = 0.2;
 
@@ -36,16 +35,18 @@ valid_split = 0.2;
 input_channels = 1; 
 % target_size = 1; 
 no_layers = 4;
-d_model = 256;
+d_model = 512;
 no_heads = 8;
-dff = 1024;
-
+dff = 1048;
 
 %% training loop
 
 model = cell(no_sets,1);
 bins = get_bins(datafile,no_bins,cutoff);
 target_size = length(bins);
+warmup_steps = 4e4;
+
+data = binance_textload(datafile);
 
 for s = 1:no_sets
     
@@ -54,8 +55,12 @@ for s = 1:no_sets
     [net,weights] = transformer(...
         input_channels,target_size,no_layers,d_model,no_heads,dff,dropout_rate);
     
-    [train_samples,eval_samples] = get_samples(datafile,1,rate,time_before,time_after);
-    [xData,yData,yBin,yRef,y] = subsample(train_samples{1},no_samples,window_size+1,prediction_length,bins);
+    sample.zeromean = data(:,5)-data(:,2); % close - open
+    sample.data = data(:,5); %close
+    
+    %[train_samples,eval_samples] = get_samples(datafile,1,rate,time_before,time_after);
+    [xData,yData,yRef,y] = subsample(sample,no_samples,window_size+1,prediction_length,bins);
+    %[xData,yData,yBin,yRef,y] = subsample(train_samples{1},no_samples,window_size+1,prediction_length,bins);
     %[xVal,yVal] = subsample(eval_samples{1},valid_split*no_samples,window_size+1,prediction_length);
 
     clear train_samples
@@ -66,19 +71,14 @@ for s = 1:no_sets
     
     %for epoch = 1:max_epochs
     epoch = 0;
-    fprintf("Starting training loop #%d\n",s);
-    while 1
-        epoch = epoch + 1;
-        if epoch == 40
-            learn_rate = 100*learn_rate;
-        elseif epoch > 40 && rem(epoch,10) == 0
-            learn_rate = learn_rate*0.8;
-        end
-    
+    fprintf("loop #%d\n",s);
+    while true
+        
         locs = randperm(no_samples);% shuffle data
         
         for i = 1:batch_size:no_samples
             gc = gc+1;
+            epoch = epoch +1;
             
             batch = [1:1+batch_size-1];
             batch(batch>no_samples) = [];
@@ -92,7 +92,7 @@ for s = 1:no_sets
             yrBatch = yrBatch/target_size;
                         
             [gradients,loss,accuracy,net] = dlfeval(@model_gradients,net,weights,xBatch,yBatch,yrBatch,dropout_rate);
-            [weights,avg_g,avg_sqg] = adamupdate(weights,gradients,avg_g,avg_sqg,gc,learn_rate);
+            [weights,avg_g,avg_sqg] = adamupdate(weights,gradients,avg_g,avg_sqg,gc,get_learnrate(gc,warmup_steps));
         end
         
         fprintf("epoch:\t%d, time_elapsed:\t%.2fs\tloss:\t%.2f\taccuracy: %%%.2f\n",epoch,toc,loss,accuracy);     
@@ -106,6 +106,10 @@ for s = 1:no_sets
 end
 
 %% helper functions
+
+function learn_rate = get_learnrate(step_num,warmup_steps)
+    learn_rate = power(step_num,-0.5)*min([power(step_num,-0.5),step_num*power(warmup_steps,-0.5)]);
+end
 
 function batch = prepare_batch(data)
     batch = data{1};
