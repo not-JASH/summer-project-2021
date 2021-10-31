@@ -8,13 +8,14 @@ clear_env();
 
 window_size = 90;
 rate = 30;
-no_samples = 3e4;
+no_samples = 1e4;
 no_sets = 10;
 prediction_length = 10;
 time_before = 7*24*60;
 time_after = 1*24*60;
 confidence_interval = 0.25;
 heuristic_limit = 1;
+
 
 batch_size = 512;
 
