@@ -29,13 +29,13 @@ classdef interface
         
         function [obj,prediction] = fwp(obj,sample)
            sample = scale_data(sample);
-           try 
-               prediction = predict(obj.model,gpuArray(dlarray(sample,'CT')),obj.last_prediction);
-               obj.last_prediction = prediction;
-               return
-           catch err
-               disp(err);
-           end          
+%            try 
+%                prediction = predict(obj.model,gpuArray(dlarray(sample,'CT')),obj.last_prediction);
+%                obj.last_prediction = prediction;
+%                return
+%            catch err
+%                disp(err);
+%            end          
            
            try
                [obj.model,prediction] = predictAndUpdateState(obj.model,sample);
